@@ -1,0 +1,90 @@
+.App {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.Card {
+  margin: 0vh 25vw 10vh;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  flex-direction: row;
+}
+
+.App-controls {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.App-image {
+  width:auto;
+  max-height: 70vh;
+  margin-bottom: 5px;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.Row-container{
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-height: 40px;
+  /* align-content: space-evenly; */
+  align-items: center;
+}
+
+.Row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  /* align-content: space-between; */
+  /* justify-content: space-between; */
+  align-items: center;
+}
+
+.Row-text{
+  width: 50%;
+  font-size: 15px;
+  padding: 0;
+  margin-top: 1px;
+  margin-bottom: 1px;
+}
+
+.Row-value{
+  width: 20%;
+  font-size: 15px;
+  padding: 0;
+  margin-top: 1px;
+  margin-bottom: 1px;
+}
+
+.Row-button {
+  color: aquamarine;
+  width: 10%;
+  padding: 0;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  font-size: 15px;
+  font-weight: bolder;
+}
+
+
+/* FOR MOBILE */
+@media (max-width: 800px) {
+
+  .Row-text{
+    font-size: 10px;
+  }
+  .Row-value{
+    font-size: 10px;
+  }
+
+  .Card {
+    margin: 5px;
+  }
+
+  .App-image {
+    width: 98%;
+  }
+}
