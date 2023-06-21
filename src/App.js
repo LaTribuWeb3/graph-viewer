@@ -17,7 +17,7 @@ async function getParameters(entity, repo, dir) {
 
   const dirUrl = `https://api.github.com/repos/${entity}/${repo}/git/trees/${dirSHA}`;
   const filesResponse = await axios.get(dirUrl);
-  const allImagesNames = filesResponse.data.tree.filter(_ => _.path.endsWith('.jpg')).map(_ => _.path);
+  const allCSVsNames = filesResponse.data.tree.filter(_ => _.path.endsWith('.csv')).map(_ => _.path);
   let tooltip = undefined;
   try {
     const tooltipReq = await axios.get(`https://raw.githubusercontent.com/${entity}/${repo}/main/${dir}/tooltip.json`);
@@ -30,7 +30,7 @@ async function getParameters(entity, repo, dir) {
 
   // extract parameter names from the first image 
   // bib-0.1+brh-0.001+vfs-125+clf-0.1.jpg
-  const parametersString = allImagesNames[0].replace('.jpg', '');
+  const parametersString = allCSVsNames[0].replace('.csv', '');
   // bib-0.1+brh-0.001+vfs-125+clf-0.1
   const parameters = parametersString.split('+')
   // bib-0.1 brh-0.001 vfs-125 clf-0.1
@@ -54,11 +54,11 @@ async function getParameters(entity, repo, dir) {
 
 
   const paramSets = {};
-  for (const imageFileName of allImagesNames) {
+  for (const CSVFileName of allCSVsNames) {
     // bib-0.1+brh-0.001+vfs-125+clf-0.1.jpg
-    const imageParams = imageFileName.replace('.jpg', '').split('+');
+    const CSVParams = CSVFileName.replace('.csv', '').split('+');
 
-    for (const prm of imageParams) {
+    for (const prm of CSVParams) {
       const paramName = prm.split('-')[0];
       const paramValue = prm.split('-')[1];
 
@@ -72,7 +72,7 @@ async function getParameters(entity, repo, dir) {
   for (const paramName of Object.keys(extractedParameters)) {
     extractedParameters[paramName].range = Array.from(paramSets[paramName]).sort((a, b) => Number(a) - Number(b))
   }
-
+  console.log(extractedParameters)
   return extractedParameters;
 }
 
@@ -197,8 +197,8 @@ function App() {
       {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> : 
       <div className='Card'>
         <img className="App-image" src={getImageUrlFromData(entity, repo, dir, currentData)} alt='graph'></img>
-        <div className='App-controls'>{Object.keys(currentData).map(_ =>
-          <Row param={_} parameters={parameters} currentData={currentData} handleChange={changeState} />
+        <div className='App-controls'>{Object.keys(currentData).map((_, i) =>
+          <Row param={_} key={i} parameters={parameters} currentData={currentData} handleChange={changeState} />
         )}</div>
       </div>
       }
