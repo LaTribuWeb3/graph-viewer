@@ -1,8 +1,10 @@
 import './App.css';
 
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useEffect, useState } from 'react';
 
 import axios from 'axios';
+import { parse } from 'papaparse';
 
 async function getParameters(entity, repo, dir) {
 
@@ -10,8 +12,8 @@ async function getParameters(entity, repo, dir) {
   const url = `https://api.github.com/repos/${entity}/${repo}/git/trees/main`;
   const dirTreeResponse = await axios.get(url);
   let dirSHA = dirTreeResponse.data.sha;
-  
-  if(dir) {
+
+  if (dir) {
     dirSHA = await findDirSHAForSubDir(dir, dirTreeResponse, repo, dirSHA, entity);
   }
 
@@ -23,10 +25,9 @@ async function getParameters(entity, repo, dir) {
     const tooltipReq = await axios.get(`https://raw.githubusercontent.com/${entity}/${repo}/main/${dir}/tooltip.json`);
     tooltip = tooltipReq.data;
   }
-  catch(error){
+  catch (error) {
     console.log('no tooltip data in specified directory')
   }
-
 
   // extract parameter names from the first image 
   // bib-0.1+brh-0.001+vfs-125+clf-0.1.jpg
@@ -44,10 +45,10 @@ async function getParameters(entity, repo, dir) {
     extractedParameters[paramName] = {
       nameBeautified: paramNameBeautified
     };
-    if(tooltip && tooltip[paramName]){
+    if (tooltip && tooltip[paramName]) {
       extractedParameters[paramName].tooltipText = tooltip[paramName];
     }
-    else{
+    else {
       extractedParameters[paramName].tooltipText = undefined;
     }
   }
@@ -72,7 +73,6 @@ async function getParameters(entity, repo, dir) {
   for (const paramName of Object.keys(extractedParameters)) {
     extractedParameters[paramName].range = Array.from(paramSets[paramName]).sort((a, b) => Number(a) - Number(b))
   }
-  console.log(extractedParameters)
   return extractedParameters;
 }
 
@@ -96,8 +96,8 @@ async function findDirSHAForSubDir(dir, dirTreeResponse, repo, dirSHA, entity) {
     nextDir = subDirs.shift();
 
     nextDirTree = null;
-    for(const dirTree of nextDirThreeResponse.data.tree) {
-      if(dirTree.path === nextDir) {
+    for (const dirTree of nextDirThreeResponse.data.tree) {
+      if (dirTree.path === nextDir) {
         nextDirTree = dirTree
       }
     }
@@ -112,18 +112,25 @@ async function findDirSHAForSubDir(dir, dirTreeResponse, repo, dirSHA, entity) {
   return dirSHA;
 }
 
-function getImageUrlFromData(entity, repo, dir, data) {
-  let imgName = '';
-  for (const [paramName, paramValue] of Object.entries(data)) {
-    imgName += imgName ? `+${paramName}-${paramValue}` : `${paramName}-${paramValue}`;
-  }
 
-  imgName += '.jpg'
-  if(dir) {
-    return `https://raw.githubusercontent.com/${entity}/${repo}/main/${dir}/${imgName}`;
-  } else {
-    return `https://raw.githubusercontent.com/${entity}/${repo}/main/${imgName}`;
-  }
+
+function graph(graphData) {
+  return <ResponsiveContainer>
+    <LineChart height="40%" width="40%"  data={graphData} margin={{
+        top: 5,
+        right: 30,
+        left: 20,
+        bottom: 5,
+      }}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="timestamp" />
+      <YAxis />
+      <Tooltip />
+      <Legend />
+      <Line type="monotone" dataKey="li" stroke="#8884d8" activeDot={{ r: 8 }} />
+      <Line type="monotone" dataKey="flare_btc_price" stroke="#82ca9d" />
+    </LineChart>
+  </ResponsiveContainer>
 }
 
 function Row(props) {
@@ -147,6 +154,7 @@ function App() {
   const [parameters, setParameters] = useState([]);
   const [currentData, setCurrentData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [graphData, setGraphData] = useState({});
   // get all images
   ///get parameters for call
   const urlParams = new URLSearchParams(window.location.search);
@@ -157,8 +165,8 @@ function App() {
   //// recursive call to get all images
   useEffect(() => {
     async function getData() {
-      
-      if(entity == null || repo == null) {
+
+      if (entity == null || repo == null) {
         console.log('entity or repo is null');
         return;
       }
@@ -174,19 +182,56 @@ function App() {
     getData();
   }, [dir, entity, repo]);
 
+  useEffect(() => {
+    function getCSVUrlFromData(entity, repo, dir, data) {
+      let CSVName = '';
+      for (const [paramName, paramValue] of Object.entries(data)) {
+        CSVName += CSVName ? `+${paramName}-${paramValue}` : `${paramName}-${paramValue}`;
+      }
+
+      CSVName += '.csv'
+      if (dir) {
+        return `https://raw.githubusercontent.com/${entity}/${repo}/main/${dir}/${CSVName}`;
+      } else {
+        return `https://raw.githubusercontent.com/${entity}/${repo}/main/${CSVName}`;
+      }
+    }
+
+    function CSVDataFormatting(CSVData) {
+      const length = CSVData.data.length - 1;
+      const step = Number((length / 50).toFixed(0));
+      const graphData = [];
+      const headers = CSVData.data[0];
+      let i = 1
+      while (i < length) {
+        const dotObject = {};
+        for (let j = 0; j < CSVData.data[i].length; j++) {
+          dotObject[headers[j]] = CSVData.data[i][j];
+        };
+        graphData.push(dotObject);
+        i += step;
+      }
+      setGraphData(graphData);
+    }
+    const CSVURL = getCSVUrlFromData(entity, repo, dir, currentData);
+    parse(CSVURL, { download: true, complete: CSVDataFormatting });
+    console.log('graphData', graphData)
+  }, [currentData]);
+
   //buttons
   function changeState(param, value, direction) {
+    console.log(currentData)
     const stateReplacement = { ...currentData };
     const index = parameters[param].range.indexOf(value);
     if (direction === 'up') {
       stateReplacement[param] = parameters[param].range[index + 1];
-      if(stateReplacement[param]){
+      if (stateReplacement[param]) {
         setCurrentData(stateReplacement);
       };
     }
     else {
       stateReplacement[param] = parameters[param].range[index - 1];
-      if(stateReplacement[param]){
+      if (stateReplacement[param]) {
         setCurrentData(stateReplacement);
       };
     }
@@ -194,13 +239,15 @@ function App() {
 
   return (
     <div className="App">
-      {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> : 
-      <div className='Card'>
-        <img className="App-image" src={getImageUrlFromData(entity, repo, dir, currentData)} alt='graph'></img>
-        <div className='App-controls'>{Object.keys(currentData).map((_, i) =>
-          <Row param={_} key={i} parameters={parameters} currentData={currentData} handleChange={changeState} />
-        )}</div>
-      </div>
+      {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> :
+        <div className='Card'>
+          <div className='App-graph'>
+            {graphData ? graph(graphData) : 'Failed to load graph data.'}
+          </div>
+          <div className='App-controls'>{Object.keys(currentData).map((_, i) =>
+            <Row param={_} key={i} parameters={parameters} currentData={currentData} handleChange={changeState} />
+          )}</div>
+        </div>
       }
     </div>
 
