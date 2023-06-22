@@ -25,6 +25,11 @@
   justify-content: space-around;
 }
 
+.App-graph{
+  width: 50vw;
+  height: 40vh;
+}
+
 .Row-container{
   display: flex;
   flex-direction: row;

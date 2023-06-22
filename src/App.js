@@ -4,6 +4,7 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import { useEffect, useState } from 'react';
 
 import axios from 'axios';
+import colors from './components/utils';
 import { parse } from 'papaparse';
 
 async function getParameters(entity, repo, dir) {
@@ -114,25 +115,6 @@ async function findDirSHAForSubDir(dir, dirTreeResponse, repo, dirSHA, entity) {
 
 
 
-function graph(graphData) {
-  return <ResponsiveContainer>
-    <LineChart height="40%" width="40%"  data={graphData} margin={{
-        top: 5,
-        right: 30,
-        left: 20,
-        bottom: 5,
-      }}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="timestamp" />
-      <YAxis />
-      <Tooltip />
-      <Legend />
-      <Line type="monotone" dataKey="li" stroke="#8884d8" activeDot={{ r: 8 }} />
-      <Line type="monotone" dataKey="flare_btc_price" stroke="#82ca9d" />
-    </LineChart>
-  </ResponsiveContainer>
-}
-
 function Row(props) {
   const param = props.param;
   const tooltip = props.parameters[param].tooltipText
@@ -155,6 +137,8 @@ function App() {
   const [currentData, setCurrentData] = useState({});
   const [loading, setLoading] = useState(true);
   const [graphData, setGraphData] = useState({});
+  const [lineNames, setLineNames] = useState(undefined);
+  const [visibilityToggles, setVisibilityToggles] = useState({});
   // get all images
   ///get parameters for call
   const urlParams = new URLSearchParams(window.location.search);
@@ -202,6 +186,7 @@ function App() {
       const step = Number((length / 50).toFixed(0));
       const graphData = [];
       const headers = CSVData.data[0];
+      const linesNames = headers.filter(_ => { if (_ !== 'timestamp' && _ !== "") return _ });
       let i = 1
       while (i < length) {
         const dotObject = {};
@@ -211,7 +196,13 @@ function App() {
         graphData.push(dotObject);
         i += step;
       }
+      const visibilityToggles = {};
+      for (let i = 0; i < linesNames.length; i++) {
+        visibilityToggles[linesNames[i]] = false;
+      }
+      setLineNames(linesNames);
       setGraphData(graphData);
+      setVisibilityToggles(visibilityToggles);
     }
     const CSVURL = getCSVUrlFromData(entity, repo, dir, currentData);
     parse(CSVURL, { download: true, complete: CSVDataFormatting });
@@ -236,13 +227,32 @@ function App() {
       };
     }
   }
+  function toggleLine(line) {
+    setVisibilityToggles({ ...visibilityToggles, [line.dataKey]: !visibilityToggles[line.dataKey] });
+  }
 
   return (
     <div className="App">
       {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> :
         <div className='Card'>
           <div className='App-graph'>
-            {graphData ? graph(graphData) : 'Failed to load graph data.'}
+            {graphData && lineNames && visibilityToggles ?
+              <ResponsiveContainer>
+                <LineChart height="40%" width="40%" data={graphData} margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="timestamp" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend onClick={toggleLine} />
+                  {lineNames.map((_, i) => <Line key={_} hide={visibilityToggles[_]} stroke={colors[i]} dataKey={_} />)}
+                </LineChart>
+              </ResponsiveContainer>
+              : 'Failed to load graph data.'}
           </div>
           <div className='App-controls'>{Object.keys(currentData).map((_, i) =>
             <Row param={_} key={i} parameters={parameters} currentData={currentData} handleChange={changeState} />
