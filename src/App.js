@@ -255,17 +255,17 @@ function App() {
               {graphData && lineNames && visibilityToggles ?
                 <ResponsiveContainer>
                   <LineChart height="40%" width="40%" data={graphData} margin={{
-                    top: 50,
-                    right: 50,
-                    left: 50,
-                    bottom: 50,
+                    top:20,
+                    right: 20,
+                    left: 20,
+                    bottom: 20,
                   }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="timestamp" tickFormatter={xAxisFormatter} />
-                    <YAxis type="number" interval="preserveStart" domain={[dataMin => (0 + Math.abs(dataMin)), 'dataMax']} tickFormatter={largeNumberFormatter} />
+                    <XAxis dataKey="timestamp" tickFormatter={xAxisFormatter} tickMargin={10}/>
+                    <YAxis tickMargin={10} type="number" domain={['dataMin', 'dataMax']} tickFormatter={largeNumberFormatter}/>
                     {/* <Tooltip content={CustomTooltip} /> */}
-                    <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} />
-                    <Legend onClick={toggleLine} formatter={formatLegend} />
+                    <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} wrapperStyle={{zIndex: 10000}} />
+                    <Legend onClick={toggleLine} formatter={formatLegend} iconType='square' wrapperStyle={{padding: 25}}/>
                     {lineNames.map((_, i) => <Line key={_} hide={visibilityToggles[_]} onClick={toggleLine} stroke={colors[i]} dataKey={_} />)}
                   </LineChart>
                 </ResponsiveContainer>

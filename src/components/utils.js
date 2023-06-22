@@ -35,8 +35,8 @@ export const colors = [
     "#a64d54",
     "#daa269",
     "#9c5e31",
-  ];
-  export function largeNumberFormatter(number) {
+];
+export function largeNumberFormatter(number) {
     if (number >= 1e9) {
         return `${(Number((number / (1e9)).toFixed(2)))}B`;
     }
@@ -47,7 +47,10 @@ export const colors = [
         return `${(Number((number / (1e3)).toFixed(2)))}K`
     }
     if (number >= 0) {
-    return `${(Number(number).toFixed(2))}`
+        return `${(Number(number).toFixed(2))}`
+    }
+    if (number < 0 && number > -1e-4) {
+        return 0
     }
     return number
 }

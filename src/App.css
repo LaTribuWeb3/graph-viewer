@@ -42,7 +42,7 @@
 
 .Row-container{
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   width: 100%;
   max-height: 40px;
 
@@ -51,7 +51,7 @@
 .Row {
   display: flex;
   flex-direction: row;
-  width: 100%;
+  width: 90%;
   align-items: center;
 }
 
@@ -87,7 +87,7 @@
   background-color: var(--background-color);
   z-index: 100000;
   font-size: var(--data-font-size);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* FOR MOBILE */
