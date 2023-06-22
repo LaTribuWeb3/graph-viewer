@@ -1,10 +1,10 @@
 import './App.css';
 
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { colors, largeNumberFormatter } from './components/utils';
 import { useEffect, useState } from 'react';
 
 import axios from 'axios';
-import colors from './components/utils';
 import { parse } from 'papaparse';
 
 async function getParameters(entity, repo, dir) {
@@ -206,12 +206,10 @@ function App() {
     }
     const CSVURL = getCSVUrlFromData(entity, repo, dir, currentData);
     parse(CSVURL, { download: true, complete: CSVDataFormatting });
-    console.log('graphData', graphData)
   }, [currentData]);
 
   //buttons
   function changeState(param, value, direction) {
-    console.log(currentData)
     const stateReplacement = { ...currentData };
     const index = parameters[param].range.indexOf(value);
     if (direction === 'up') {
@@ -231,37 +229,65 @@ function App() {
     setVisibilityToggles({ ...visibilityToggles, [line.dataKey]: !visibilityToggles[line.dataKey] });
   }
 
-  return (
-    <div className="App">
-      {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> :
-        <div className='Card'>
-          <div className='App-graph'>
-            {graphData && lineNames && visibilityToggles ?
-              <ResponsiveContainer>
-                <LineChart height="40%" width="40%" data={graphData} margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend onClick={toggleLine} />
-                  {lineNames.map((_, i) => <Line key={_} hide={visibilityToggles[_]} stroke={colors[i]} dataKey={_} />)}
-                </LineChart>
-              </ResponsiveContainer>
-              : 'Failed to load graph data.'}
+  function formatLegend(legend) {
+    const legendName = legend.split('_');
+    return legendName.reduce((acc, word) => acc ? acc + ` ${word}` : acc + word);
+  }
+  function timeFormatter(timestamp) {
+    const date = new Date(timestamp / 1e3);
+    return date.toLocaleString();
+  }
+  const CustomTooltip = ({ active, payload, label }) => {
+      if (active && payload && payload.length) {
+        const loadedPayload = Object.assign({}, payload[0].payload);
+        const date = new Date(loadedPayload.timestamp / 1e3); 
+        delete loadedPayload[""];
+        delete loadedPayload.timestamp;
+        const linesLabels = [];
+        for (const key of Object.entries(loadedPayload)) {
+          linesLabels.push(key);
+          }
+        return (
+          <div className="tooltip-container">
+            <div>Date: {date.toLocaleString()}</div>
+            {linesLabels.map(_ => <div key={_[0]}>{formatLegend(_[0])}: {largeNumberFormatter(_[1])}</div>)}
           </div>
-          <div className='App-controls'>{Object.keys(currentData).map((_, i) =>
-            <Row param={_} key={i} parameters={parameters} currentData={currentData} handleChange={changeState} />
-          )}</div>
-        </div>
+        );
       }
-    </div>
+    }
 
-  );
-}
 
-export default App;
+    return (
+      <div className="App">
+        {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> :
+          <div className='Card'>
+            <div className='App-graph'>
+              {graphData && lineNames && visibilityToggles ?
+                <ResponsiveContainer>
+                  <LineChart height="40%" width="40%" data={graphData} margin={{
+                    top: 50,
+                    right: 50,
+                    left: 50,
+                    bottom: 50,
+                  }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="timestamp" tickFormatter={timeFormatter} />
+                    <YAxis tickFormatter={largeNumberFormatter} />
+                    <Tooltip content={CustomTooltip} />
+                    <Legend onClick={toggleLine} formatter={formatLegend} />
+                    {lineNames.map((_, i) => <Line key={_} hide={visibilityToggles[_]} onClick={toggleLine} stroke={colors[i]} dataKey={_} />)}
+                  </LineChart>
+                </ResponsiveContainer>
+                : 'Failed to load graph data.'}
+            </div>
+            <div className='App-controls'>{Object.keys(currentData).map((_, i) =>
+              <Row param={_} key={i} parameters={parameters} currentData={currentData} handleChange={changeState} />
+            )}</div>
+          </div>
+        }
+      </div>
+
+    );
+  }
+
+  export default App;

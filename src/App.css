@@ -73,7 +73,15 @@
   font-size: 15px;
   font-weight: bolder;
 }
-
+.tooltip-container {
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-box-shadow);
+  padding: 20px;
+  background-color: var(--background-color);
+  z-index: 100000;
+  font-size: var(--data-font-size);
+  overflow: hidden;
+}
 
 /* FOR MOBILE */
 @media (max-width: 800px) {

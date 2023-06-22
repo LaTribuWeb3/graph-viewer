@@ -1,4 +1,4 @@
-const colors = [
+export const colors = [
     "#1095C1",
     "#6bc44e",
     "#995fd8",
@@ -36,5 +36,15 @@ const colors = [
     "#daa269",
     "#9c5e31",
   ];
-
-  export default colors;
+  export function largeNumberFormatter(number) {
+    if (number >= 1e9) {
+        return `${(Number((number / (1e9)).toFixed(2)))}B`;
+    }
+    if (number >= 1e6) {
+        return `${(Number((number / (1e6)).toFixed(2)))}M`
+    }
+    if (number >= 1e3) {
+        return `${(Number((number / (1e3)).toFixed(2)))}K`
+    }
+    return `${(Number(number).toFixed(2))}`
+}
