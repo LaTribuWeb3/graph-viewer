@@ -262,7 +262,7 @@ function App() {
                   }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="timestamp" tickFormatter={xAxisFormatter} />
-                    <YAxis tickFormatter={largeNumberFormatter} />
+                    <YAxis type="number" interval="preserveStart" domain={[dataMin => (0 + Math.abs(dataMin)), 'dataMax']} tickFormatter={largeNumberFormatter} />
                     {/* <Tooltip content={CustomTooltip} /> */}
                     <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} />
                     <Legend onClick={toggleLine} formatter={formatLegend} />

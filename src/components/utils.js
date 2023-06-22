@@ -46,5 +46,8 @@ export const colors = [
     if (number >= 1e3) {
         return `${(Number((number / (1e3)).toFixed(2)))}K`
     }
+    if (number >= 0) {
     return `${(Number(number).toFixed(2))}`
+    }
+    return number
 }
