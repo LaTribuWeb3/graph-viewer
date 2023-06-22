@@ -187,6 +187,7 @@ function App() {
       const graphData = [];
       const headers = CSVData.data[0];
       const linesNames = headers.filter(_ => { if (_ !== 'timestamp' && _ !== "") return _ });
+      linesNames.sort();
       let i = 1
       while (i < length) {
         const dotObject = {};
@@ -233,29 +234,18 @@ function App() {
     const legendName = legend.split('_');
     return legendName.reduce((acc, word) => acc ? acc + ` ${word}` : acc + word);
   }
-  function timeFormatter(timestamp) {
+  function xAxisFormatter(timestamp) {
     const date = new Date(timestamp / 1e3);
-    return date.toLocaleString();
+    return date.toLocaleDateString();
   }
-  const CustomTooltip = ({ active, payload, label }) => {
-      if (active && payload && payload.length) {
-        const loadedPayload = Object.assign({}, payload[0].payload);
-        const date = new Date(loadedPayload.timestamp / 1e3); 
-        delete loadedPayload[""];
-        delete loadedPayload.timestamp;
-        const linesLabels = [];
-        for (const key of Object.entries(loadedPayload)) {
-          linesLabels.push(key);
-          }
-        return (
-          <div className="tooltip-container">
-            <div>Date: {date.toLocaleString()}</div>
-            {linesLabels.map(_ => <div key={_[0]}>{formatLegend(_[0])}: {largeNumberFormatter(_[1])}</div>)}
-          </div>
-        );
-      }
-    }
 
+    function tooltipFormatter(value, name){
+      return [largeNumberFormatter(value), formatLegend(name)];
+    }
+    function tooltipLabelFormatter(timestamp){
+      const date = new Date(timestamp / 1e3);
+      return date.toLocaleString();
+    }
 
     return (
       <div className="App">
@@ -271,9 +261,10 @@ function App() {
                     bottom: 50,
                   }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="timestamp" tickFormatter={timeFormatter} />
+                    <XAxis dataKey="timestamp" tickFormatter={xAxisFormatter} />
                     <YAxis tickFormatter={largeNumberFormatter} />
-                    <Tooltip content={CustomTooltip} />
+                    {/* <Tooltip content={CustomTooltip} /> */}
+                    <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} />
                     <Legend onClick={toggleLine} formatter={formatLegend} />
                     {lineNames.map((_, i) => <Line key={_} hide={visibilityToggles[_]} onClick={toggleLine} stroke={colors[i]} dataKey={_} />)}
                   </LineChart>
