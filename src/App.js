@@ -249,6 +249,7 @@ function App() {
 
     return (
       <div className="App">
+        <div className='Header'><picture><source srcSet='./white-wordmark.png' media='(prefers-color-scheme: dark)'/><img src='./black-wordmark.png' alt='Risk DAO logo'/></picture></div>
         {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> :
           <div className='Card'>
             <div className='App-graph'>
