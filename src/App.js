@@ -247,9 +247,15 @@ function App() {
       return date.toLocaleString();
     }
 
+    function tryMe(){
+      const url = window.location + "?entity=0xvorian&repo=csv-reader-testing&dir=test"
+      window.location.href= url;
+    }
+
     return (
       <div className="App">
-        {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo </div> : loading ? <div className='Card'> Loading </div> :
+        <div className='Header'><picture><source srcSet='./white-wordmark.png' media='(prefers-color-scheme: dark)'/><img src='./black-wordmark.png' alt='Risk DAO logo'/></picture></div>
+        {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo <br/> or <br/> <button className='TryMe' onClick={tryMe}>Try me</button> </div> : loading ? <div className='Card'> Loading </div> :
           <div className='Card'>
             <div className='App-graph'>
               {graphData && lineNames && visibilityToggles ?

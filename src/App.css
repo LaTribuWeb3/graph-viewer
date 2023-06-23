@@ -19,6 +19,11 @@
   justify-content: center;
 }
 
+.TryMe {
+  width: 4vw;
+  margin-top: 1vh;
+}
+
 .App-controls {
   text-align: center;
   display: flex;
