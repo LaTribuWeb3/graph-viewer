@@ -192,7 +192,7 @@ function App() {
       while (i < length) {
         const dotObject = {};
         for (let j = 0; j < CSVData.data[i].length; j++) {
-          dotObject[headers[j]] = CSVData.data[i][j];
+          dotObject[headers[j]] = Number(CSVData.data[i][j]);
         };
         graphData.push(dotObject);
         i += step;
