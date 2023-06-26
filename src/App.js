@@ -1,11 +1,32 @@
 import './App.css';
 
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { colors, largeNumberFormatter } from './components/utils';
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Title,
+  Tooltip,
+} from 'chart.js';
 import { useEffect, useState } from 'react';
 
+import { Line } from 'react-chartjs-2';
 import axios from 'axios';
+import { largeNumberFormatter } from './components/utils';
 import { parse } from 'papaparse';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 
 async function getParameters(entity, repo, dir) {
 
@@ -136,9 +157,10 @@ function App() {
   const [parameters, setParameters] = useState([]);
   const [currentData, setCurrentData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [graphData, setGraphData] = useState({});
+  const [graphData, setGraphData] = useState(undefined);
   const [lineNames, setLineNames] = useState(undefined);
   const [visibilityToggles, setVisibilityToggles] = useState({});
+  const [loaded, setLoaded] = useState(false);
   // get all images
   ///get parameters for call
   const urlParams = new URLSearchParams(window.location.search);
@@ -168,6 +190,7 @@ function App() {
 
   useEffect(() => {
     function getCSVUrlFromData(entity, repo, dir, data) {
+      setLoaded(false);
       let CSVName = '';
       for (const [paramName, paramValue] of Object.entries(data)) {
         CSVName += CSVName ? `+${paramName}-${paramValue}` : `${paramName}-${paramValue}`;
@@ -182,21 +205,34 @@ function App() {
     }
 
     function CSVDataFormatting(CSVData) {
+      setLoaded(false);
       const length = CSVData.data.length - 1;
-      const step = Number((length / 50).toFixed(0));
-      const graphData = [];
+      
       const headers = CSVData.data[0];
       const linesNames = headers.filter(_ => { if (_ !== 'timestamp' && _ !== "") return _ });
       linesNames.sort();
-      let i = 1
-      while (i < length) {
-        const dotObject = {};
-        for (let j = 0; j < CSVData.data[i].length; j++) {
-          dotObject[headers[j]] = Number(CSVData.data[i][j]);
-        };
-        graphData.push(dotObject);
-        i += step;
+      const graphDatasets = {};
+      const graphData = {};
+      const graphDatasetsArray = [];
+      for(let i = 0; i < headers.length; i++){
+        graphDatasets[headers[i]] = [];
       }
+      for(let i = 1; i < length; i++){
+        for (let j = 0; j < CSVData.data[i].length; j++) {
+          graphDatasets[headers[j]].push(Number(CSVData.data[i][j]));
+        };
+      }
+      for(const [key, value] of Object.entries(graphDatasets)){
+        const toPush = {
+          label: key,
+          data: value
+        }
+        graphDatasetsArray.push(toPush);
+      }
+      graphDatasetsArray.shift();
+      graphData['labels'] = graphDatasetsArray[0].data;
+      graphDatasetsArray.shift();
+      graphData['datasets'] = graphDatasetsArray;
       const visibilityToggles = {};
       for (let i = 0; i < linesNames.length; i++) {
         visibilityToggles[linesNames[i]] = false;
@@ -204,6 +240,7 @@ function App() {
       setLineNames(linesNames);
       setGraphData(graphData);
       setVisibilityToggles(visibilityToggles);
+      setLoaded(true);
     }
     const CSVURL = getCSVUrlFromData(entity, repo, dir, currentData);
     parse(CSVURL, { download: true, complete: CSVDataFormatting });
@@ -258,23 +295,8 @@ function App() {
         {(entity == null || repo == null) ? <div className='Card'> Please enter entity and repo <br/> or <br/> <button className='TryMe' onClick={tryMe}>Try me</button> </div> : loading ? <div className='Card'> Loading </div> :
           <div className='Card'>
             <div className='App-graph'>
-              {graphData && lineNames && visibilityToggles ?
-                <ResponsiveContainer>
-                  <LineChart height="40%" width="40%" data={graphData} margin={{
-                    top:20,
-                    right: 20,
-                    left: 20,
-                    bottom: 20,
-                  }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="timestamp" tickFormatter={xAxisFormatter} tickMargin={10}/>
-                    <YAxis tickMargin={10} type="number" domain={['dataMin', 'dataMax']} tickFormatter={largeNumberFormatter}/>
-                    {/* <Tooltip content={CustomTooltip} /> */}
-                    <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} wrapperStyle={{zIndex: 10000}} itemSorter={(item) => {return Number(item.value) * -1;}} />
-                    <Legend onClick={toggleLine} formatter={formatLegend} iconType='square' wrapperStyle={{padding: 25}}/>
-                    {lineNames.map((_, i) => <Line key={_} hide={visibilityToggles[_]} onClick={toggleLine} stroke={colors[i]} dataKey={_} />)}
-                  </LineChart>
-                </ResponsiveContainer>
+              {loading ? 'loading data' : graphData && loaded ?
+                <Line data={graphData}/>
                 : 'Failed to load graph data.'}
             </div>
             <div className='App-controls'>{Object.keys(currentData).map((_, i) =>
