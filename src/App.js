@@ -270,7 +270,7 @@ function App() {
                     <XAxis dataKey="timestamp" tickFormatter={xAxisFormatter} tickMargin={10}/>
                     <YAxis tickMargin={10} type="number" domain={['dataMin', 'dataMax']} tickFormatter={largeNumberFormatter}/>
                     {/* <Tooltip content={CustomTooltip} /> */}
-                    <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} wrapperStyle={{zIndex: 10000}} />
+                    <Tooltip formatter={tooltipFormatter} labelFormatter={tooltipLabelFormatter} wrapperStyle={{zIndex: 10000}} itemSorter={(item) => {return Number(item.value) * -1;}} />
                     <Legend onClick={toggleLine} formatter={formatLegend} iconType='square' wrapperStyle={{padding: 25}}/>
                     {lineNames.map((_, i) => <Line key={_} hide={visibilityToggles[_]} onClick={toggleLine} stroke={colors[i]} dataKey={_} />)}
                   </LineChart>
